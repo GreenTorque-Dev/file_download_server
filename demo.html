@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Plugin Demo</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#f1f5f9; min-height:100vh; }
+    header { padding:48px 32px 24px; text-align:center; }
+    header h1 { font-size:32px; font-weight:800; background:linear-gradient(90deg,#38bdf8,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+    header p { color:#94a3b8; font-size:15px; }
+    .page { max-width:860px; margin:0 auto; padding:32px; }
+    .card { background:#1e293b; border:1px solid #334155; border-radius:14px; padding:28px; margin-bottom:32px; }
+    .card h2 { font-size:17px; color:#f1f5f9; margin-bottom:6px; }
+    .card p  { color:#64748b; font-size:13px; margin-bottom:18px; }
+    .code-block { background:#0f172a; border-radius:8px; padding:16px; font-family:monospace; font-size:13px; color:#38bdf8; white-space:pre; overflow-x:auto; margin-bottom:18px; }
+    .label { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#475569; margin-bottom:12px; }
+    .divider { border:none; border-top:1px solid #1e293b; margin:40px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Email Capture Plugin</h1>
+  <p>Same server. Different files. One script tag per page.</p>
+</header>
+
+<div class="page">
+
+  <!-- Example 1: ebook.pdf inline -->
+  <div class="card">
+    <h2>Page A — sends <code>ebook.pdf</code> (inline, light)</h2>
+    <p>Developer sets <strong>data-file="ebook.pdf"</strong>. User enters email, gets that file.</p>
+    <div class="code-block">&lt;script src="http://localhost:8000/plugin.js"
+        data-website="mysite"
+        data-file="ebook.pdf"
+        data-title="Download our free eBook"
+        data-btn="Send me the eBook"
+        data-theme="light"
+        data-position="inline"&gt;
+&lt;/script&gt;</div>
+    <p class="label">Live Preview ↓</p>
+    <script src="/plugin.js"
+      data-website="mysite"
+      data-file="ebook.pdf"
+      data-title="Download our free eBook"
+      data-btn="Send me the eBook"
+      data-theme="light"
+      data-position="inline">
+    </script>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Example 2: guide.pdf dark floating -->
+  <div class="card">
+    <h2>Page B — sends <code>guide.pdf</code> (floating, dark)</h2>
+    <p>Same server, different file. Floating button at bottom-right.</p>
+    <div class="code-block">&lt;script src="http://localhost:8000/plugin.js"
+        data-website="mysite"
+        data-file="guide.pdf"
+        data-title="Get the complete guide"
+        data-btn="Get guide"
+        data-theme="dark"
+        data-position="bottom-right"&gt;
+&lt;/script&gt;</div>
+    <p style="color:#64748b;font-size:13px;">👉 See the floating button at bottom-right of this page.</p>
+    <script src="/plugin.js"
+      data-website="mysite"
+      data-file="guide.pdf"
+      data-title="Get the complete guide"
+      data-btn="Get guide"
+      data-theme="dark"
+      data-position="bottom-right">
+    </script>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Example 3: template.zip popup -->
+  <div class="card">
+    <h2>Page C — sends <code>template.zip</code> (popup)</h2>
+    <p>Any file type works — pdf, zip, docx, etc. Center popup style.</p>
+    <div class="code-block">&lt;script src="http://localhost:8000/plugin.js"
+        data-website="mysite"
+        data-file="template.zip"
+        data-title="Free template pack"
+        data-btn="Get templates"
+        data-position="center-popup"&gt;
+&lt;/script&gt;</div>
+    <button onclick="window.ECPlugin && window.ECPlugin.open()"
+      style="padding:11px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+      Open Popup
+    </button>
+    <script src="/plugin.js"
+      data-website="mysite"
+      data-file="template.zip"
+      data-title="Free template pack"
+      data-btn="Get templates"
+      data-position="center-popup">
+    </script>
+  </div>
+
+</div>
+</body>
+</html>
