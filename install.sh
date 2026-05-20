@@ -1,6 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Email Capture Plugin — Ubuntu Auto Installer
+# Python 3.8 compatible — pinned library versions
 # =============================================================================
 # Usage:
 #   chmod +x install.sh
@@ -91,11 +92,12 @@ section "System Packages"
 info "Updating apt..."
 apt-get update -qq
 
-info "Installing Python3, pip, venv, curl..."
+info "Installing Python 3.8, pip, venv, curl..."
 apt-get install -y -qq \
-  python3 \
+  python3.8 \
+  python3.8-venv \
+  python3.8-distutils \
   python3-pip \
-  python3-venv \
   curl \
   cron \
   lsof
@@ -114,7 +116,7 @@ mkdir -p "$LOG_DIR"
 # Copy all plugin files from current directory to install dir
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-for f in main.py plugin.js demo.html requirements.txt; do
+for f in main.py plugin.js demo.html; do
   if [ -f "$SCRIPT_DIR/$f" ]; then
     cp "$SCRIPT_DIR/$f" "$INSTALL_DIR/$f"
     log "Copied $f"
@@ -132,23 +134,49 @@ fi
 log "Application files installed to $INSTALL_DIR"
 
 # =============================================================================
-# STEP 4 — Python virtual environment + dependencies
+# STEP 4 — Python 3.8 virtual environment + pinned dependencies
 # =============================================================================
-section "Python Environment"
+section "Python 3.8 Environment"
 
+# Resolve Python 3.8 binary
+if command -v python3.8 &>/dev/null; then
+  PYTHON_BIN="python3.8"
+elif python3 --version 2>&1 | grep -q "3\.8"; then
+  PYTHON_BIN="python3"
+else
+  error "Python 3.8 not found after install — check apt sources."
+fi
+
+info "Using $($PYTHON_BIN --version)"
 info "Creating virtual environment at $VENV_DIR..."
-python3 -m venv "$VENV_DIR"
+$PYTHON_BIN -m venv "$VENV_DIR"
 
-info "Installing Python packages..."
-"$VENV_DIR/bin/pip" install --upgrade pip -q
+info "Upgrading pip..."
+"$VENV_DIR/bin/pip" install --upgrade "pip==23.3.1" -q
+
+info "Installing pinned Python packages..."
 "$VENV_DIR/bin/pip" install \
-  fastapi \
-  "uvicorn[standard]" \
-  "pydantic[email]" \
-  python-multipart \
+  "fastapi==0.103.2" \
+  "uvicorn[standard]==0.23.2" \
+  "pydantic[email]==1.10.13" \
+  "python-multipart==0.0.6" \
+  "email-validator==1.3.1" \
+  "python-dotenv==1.0.0" \
   -q
 
-log "Python environment ready."
+log "Python 3.8 environment ready."
+
+# Write pinned requirements.txt for reference
+cat > "$INSTALL_DIR/requirements.txt" <<EOF
+# Python 3.8 — pinned versions
+fastapi==0.103.2
+uvicorn[standard]==0.23.2
+pydantic[email]==1.10.13
+python-multipart==0.0.6
+email-validator==1.3.1
+python-dotenv==1.0.0
+EOF
+log "requirements.txt written to $INSTALL_DIR/requirements.txt"
 
 # =============================================================================
 # STEP 5 — Write .env file
@@ -177,13 +205,13 @@ section "Patching Application Config"
 
 # Inject dotenv loader at top of main.py if not already present
 if ! grep -q "dotenv" "$INSTALL_DIR/main.py" 2>/dev/null; then
-  "$VENV_DIR/bin/pip" install python-dotenv -q
-
-  # Prepend dotenv loading lines
+  # Prepend dotenv loading lines (no extra package needed — manual parse)
   TMP=$(mktemp)
   cat > "$TMP" <<'PYEOF'
 import os
 from pathlib import Path as _P
+
+# ── Load .env automatically ──────────────────────────────────────────────────
 _env = _P(__file__).parent / '.env'
 if _env.exists():
     for _line in _env.read_text().splitlines():
@@ -191,11 +219,14 @@ if _env.exists():
         if _line and not _line.startswith('#') and '=' in _line:
             _k, _v = _line.split('=', 1)
             os.environ.setdefault(_k.strip(), _v.strip())
+# ─────────────────────────────────────────────────────────────────────────────
 
 PYEOF
   cat "$INSTALL_DIR/main.py" >> "$TMP"
   mv "$TMP" "$INSTALL_DIR/main.py"
   log "dotenv loader injected into main.py"
+else
+  log "main.py already has dotenv loader — skipping patch"
 fi
 
 # =============================================================================
@@ -271,7 +302,6 @@ section "Cron Jobs"
 CRON_START="@reboot $INSTALL_DIR/start.sh >> $LOG_FILE 2>&1"
 CRON_ALIVE="*/5 * * * * $INSTALL_DIR/start.sh >> $LOG_FILE 2>&1"
 
-# Get current crontab, remove old entries, add new ones
 (
   crontab -l 2>/dev/null | grep -v "email-plugin" | grep -v "$INSTALL_DIR/start.sh"
   echo "# email-plugin: auto-start on reboot"
@@ -327,6 +357,9 @@ echo -e "  ${BOLD}Install dir:${NC}      $INSTALL_DIR"
 echo -e "  ${BOLD}Files folder:${NC}     $INSTALL_DIR/files/"
 echo -e "  ${BOLD}Logs:${NC}             $LOG_FILE"
 echo ""
+echo -e "  ${BOLD}Python:${NC}           $($PYTHON_BIN --version 2>&1)"
+echo -e "  ${BOLD}Requirements:${NC}     $INSTALL_DIR/requirements.txt"
+echo ""
 echo -e "  ${BOLD}Commands:${NC}"
 echo -e "    Start:   ${CYAN}$INSTALL_DIR/start.sh${NC}"
 echo -e "    Stop:    ${CYAN}$INSTALL_DIR/stop.sh${NC}"
@@ -340,6 +373,6 @@ echo ""
 echo -e "  ${YELLOW}Next steps:${NC}"
 echo -e "    1. Drop your files into ${BOLD}$INSTALL_DIR/files/${NC}"
 echo -e "    2. Paste the script tag on your website with the correct ${BOLD}data-file${NC} name"
-echo -e "    3. Check subscribers at ${BOLD}$BASE_URL/admin/subscribers?secret=admin{NC}"
-echo -e "    4. Download links expire after ${BOLD}${LINK_EXPIRE_HRS}h${NC} — set via LINK_EXPIRE_HRS env var"
+echo -e "    3. Check subscribers at ${BOLD}$BASE_URL/admin/subscribers?secret=admin${NC}"
+echo -e "    4. Download links expire after ${BOLD}${LINK_EXPIRE}h${NC} — change via LINK_EXPIRE_HRS in .env"
 echo ""
