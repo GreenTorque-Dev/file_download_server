@@ -143,7 +143,7 @@ python3 -m venv "$VENV_DIR"
 info "Installing Python packages..."
 "$VENV_DIR/bin/pip" install --upgrade pip -q
 "$VENV_DIR/bin/pip" install \
-  fastapi==0.115.0 \
+  fastapi \
   "uvicorn[standard]==0.30.6" \
   "pydantic[email]==2.7.4" \
   python-multipart==0.0.9 \
