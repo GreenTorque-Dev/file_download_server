@@ -79,7 +79,6 @@ prompt SMTP_PORT     "SMTP port"                                  "587"
 prompt SMTP_USER     "SMTP username (your email)"                 ""
 prompt SMTP_PASSWORD "SMTP password / App password" ""            secret
 prompt FROM_EMAIL    "From email address"                         "$SMTP_USER"
-prompt ADMIN_SECRET  "Admin panel secret password"                "admin$(shuf -i 1000-9999 -n 1)"
 
 echo ""
 log "Configuration collected."
@@ -166,7 +165,6 @@ SMTP_PORT=$SMTP_PORT
 SMTP_USER=$SMTP_USER
 SMTP_PASSWORD=$SMTP_PASSWORD
 FROM_EMAIL=$FROM_EMAIL
-ADMIN_SECRET=$ADMIN_SECRET
 EOF
 
 chmod 600 "$INSTALL_DIR/.env"
@@ -323,7 +321,7 @@ echo -e "${GREEN}${BOLD}╚═════════════════�
 echo ""
 echo -e "  ${BOLD}Server URL:${NC}       $BASE_URL"
 echo -e "  ${BOLD}Demo page:${NC}        $BASE_URL/demo"
-echo -e "  ${BOLD}Admin panel:${NC}      $BASE_URL/admin/subscribers?secret=$ADMIN_SECRET"
+echo -e "  ${BOLD}Admin panel:${NC}      $BASE_URL/admin/subscribers?secret=admin"
 echo -e "  ${BOLD}Files list:${NC}       $BASE_URL/api/files"
 echo -e "  ${BOLD}Install dir:${NC}      $INSTALL_DIR"
 echo -e "  ${BOLD}Files folder:${NC}     $INSTALL_DIR/files/"
@@ -342,6 +340,6 @@ echo ""
 echo -e "  ${YELLOW}Next steps:${NC}"
 echo -e "    1. Drop your files into ${BOLD}$INSTALL_DIR/files/${NC}"
 echo -e "    2. Paste the script tag on your website with the correct ${BOLD}data-file${NC} name"
-echo -e "    3. Check subscribers at ${BOLD}$BASE_URL/admin/subscribers?secret=$ADMIN_SECRET${NC}"
+echo -e "    3. Check subscribers at ${BOLD}$BASE_URL/admin/subscribers?secret=admin{NC}"
 echo -e "    4. Download links expire after ${BOLD}${LINK_EXPIRE_HRS}h${NC} — set via LINK_EXPIRE_HRS env var"
 echo ""

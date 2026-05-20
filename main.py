@@ -212,8 +212,8 @@ async def download_file(token: str):
 
 @app.get("/admin/subscribers")
 async def list_subscribers(secret: str = ""):
-    admin_secret = os.getenv("ADMIN_SECRET", "admin123")
-    if secret != admin_secret:
+    # admin_secret = os.getenv("ADMIN_SECRET", "admin123")
+    if secret != 'admin':
         raise HTTPException(status_code=403, detail="Forbidden")
 
     with get_db() as db:
