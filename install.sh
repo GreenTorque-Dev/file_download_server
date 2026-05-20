@@ -144,9 +144,9 @@ info "Installing Python packages..."
 "$VENV_DIR/bin/pip" install --upgrade pip -q
 "$VENV_DIR/bin/pip" install \
   fastapi \
-  "uvicorn[standard]==0.30.6" \
-  "pydantic[email]==2.7.4" \
-  python-multipart==0.0.9 \
+  "uvicorn[standard]" \
+  "pydantic[email]" \
+  python-multipart \
   -q
 
 log "Python environment ready."
