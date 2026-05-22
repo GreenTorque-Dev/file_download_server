@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Email Capture Plugin — Ubuntu Auto Installer
-# Python 3.8 compatible — pinned library versions
+# Python 3.12 compatible — works on Ubuntu 20.04, 22.04, 24.04
 # =============================================================================
 # Usage:
 #   chmod +x install.sh
@@ -85,22 +85,34 @@ echo ""
 log "Configuration collected."
 
 # =============================================================================
-# STEP 2 — System packages
+# STEP 2 — System packages + Python 3.12 (auto-detects Ubuntu version)
 # =============================================================================
 section "System Packages"
 
 info "Updating apt..."
 apt-get update -qq
 
-info "Installing Python 3.8, pip, venv, curl..."
-apt-get install -y -qq \
-  python3.8 \
-  python3.8-venv \
-  python3.8-distutils \
-  python3-pip \
-  curl \
-  cron \
-  lsof
+info "Installing base packages..."
+apt-get install -y -qq curl cron lsof
+
+# ── Python 3.12 detection & install ──────────────────────────────────────────
+section "Python 3.12 Check"
+
+if python3 -c "import sys; exit(0 if sys.version_info >= (3,12) else 1)" 2>/dev/null; then
+  # System Python is already 3.12+ (Ubuntu 24.04+)
+  PYTHON_BIN="python3"
+  log "Python 3.12+ already available: $(python3 --version)"
+  apt-get install -y -qq python3-venv python3-pip
+else
+  # Older Ubuntu (20.04 / 22.04) — install 3.12 via deadsnakes PPA
+  warn "System Python is $(python3 --version 2>&1) — need 3.12. Installing via deadsnakes PPA..."
+  apt-get install -y -qq software-properties-common
+  add-apt-repository -y ppa:deadsnakes/ppa
+  apt-get update -qq
+  apt-get install -y -qq python3.12 python3.12-venv python3.12-distutils
+  PYTHON_BIN="python3.12"
+  log "Python 3.12 installed via deadsnakes: $($PYTHON_BIN --version)"
+fi
 
 log "System packages installed."
 
@@ -134,49 +146,21 @@ fi
 log "Application files installed to $INSTALL_DIR"
 
 # =============================================================================
-# STEP 4 — Python 3.8 virtual environment + pinned dependencies
+# STEP 4 — Python 3.12 virtual environment + pinned dependencies
 # =============================================================================
-section "Python 3.8 Environment"
+section "Python 3.12 Environment"
 
-# Resolve Python 3.8 binary
-if command -v python3.8 &>/dev/null; then
-  PYTHON_BIN="python3.8"
-elif python3 --version 2>&1 | grep -q "3\.8"; then
-  PYTHON_BIN="python3"
-else
-  error "Python 3.8 not found after install — check apt sources."
-fi
-
-info "Using $($PYTHON_BIN --version)"
+info "Using: $($PYTHON_BIN --version)"
 info "Creating virtual environment at $VENV_DIR..."
 $PYTHON_BIN -m venv "$VENV_DIR"
 
 info "Upgrading pip..."
-"$VENV_DIR/bin/pip" install --upgrade "pip==23.3.1" -q
+"$VENV_DIR/bin/pip" install --upgrade "pip==24.0" -q
 
 info "Installing pinned Python packages..."
-"$VENV_DIR/bin/pip" install \
-  "fastapi==0.103.2" \
-  "uvicorn[standard]==0.23.2" \
-  "pydantic[email]==1.10.13" \
-  "python-multipart==0.0.6" \
-  "email-validator==1.3.1" \
-  "python-dotenv==1.0.0" \
-  -q
+"$VENV_DIR/bin/pip" install -r requirements.txt
 
-log "Python 3.8 environment ready."
-
-# Write pinned requirements.txt for reference
-cat > "$INSTALL_DIR/requirements.txt" <<EOF
-# Python 3.8 — pinned versions
-fastapi==0.103.2
-uvicorn[standard]==0.23.2
-pydantic[email]==1.10.13
-python-multipart==0.0.6
-email-validator==1.3.1
-python-dotenv==1.0.0
-EOF
-log "requirements.txt written to $INSTALL_DIR/requirements.txt"
+log "Python 3.12 environment ready."
 
 # =============================================================================
 # STEP 5 — Write .env file
@@ -205,7 +189,6 @@ section "Patching Application Config"
 
 # Inject dotenv loader at top of main.py if not already present
 if ! grep -q "dotenv" "$INSTALL_DIR/main.py" 2>/dev/null; then
-  # Prepend dotenv loading lines (no extra package needed — manual parse)
   TMP=$(mktemp)
   cat > "$TMP" <<'PYEOF'
 import os

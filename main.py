@@ -4,13 +4,15 @@ Email Capture Plugin — FastAPI Backend
 Embed on any website with one <script> tag.
 Developer sets which file to send via data-file attribute.
 Server stores all files in /files/ folder.
+
+Python 3.12 + Pydantic v2 compatible.
 """
 
 import sqlite3
 import uuid
 import smtplib
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
@@ -148,7 +150,8 @@ async def subscribe(req: SubscribeRequest, request: Request):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"File '{file_name}' not found on server.")
 
-    now        = datetime.utcnow()
+    # ✅ Python 3.12: use timezone-aware datetime instead of deprecated utcnow()
+    now        = datetime.now(timezone.utc)
     expires_at = now + timedelta(hours=LINK_EXPIRE_HRS)
     token      = generate_token()
     ip         = request.client.host
@@ -189,7 +192,13 @@ async def download_file(token: str):
     if not row:
         raise HTTPException(status_code=404, detail="Invalid link.")
 
-    if datetime.utcnow() > datetime.fromisoformat(row["expires_at"]):
+    # ✅ Python 3.12: compare timezone-aware datetimes consistently
+    expires_at = datetime.fromisoformat(row["expires_at"])
+    if expires_at.tzinfo is None:
+        # Handle legacy rows stored without timezone info
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if datetime.now(timezone.utc) > expires_at:
         raise HTTPException(status_code=410, detail="This download link has expired.")
 
     file_path = FILES_DIR / row["file_name"]
@@ -212,7 +221,6 @@ async def download_file(token: str):
 
 @app.get("/admin/subscribers")
 async def list_subscribers(secret: str = ""):
-    # admin_secret = os.getenv("ADMIN_SECRET", "admin123")
     if secret != 'admin':
         raise HTTPException(status_code=403, detail="Forbidden")
 
