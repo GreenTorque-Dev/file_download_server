@@ -101,27 +101,183 @@ def send_email(to_email: str, subject: str, html_body: str):
 def generate_token():
     return str(uuid.uuid4()).replace("-", "")
 
-def build_email_html(file_name: str, download_url: str, expire_hrs: int) -> str:
+def _build_specs_block(spec_module: str | None, spec_version: str | None, spec_arch: str | None) -> str:
+    """Deployment Specifications box — only renders rows that were actually provided.
+    Returns "" entirely if none of the three fields were supplied."""
+    rows = []
+    if spec_module:
+        rows.append(
+            f'<span style="color:#22c55e; margin-right:5px;">&#10003;</span>'
+            f'<strong>Product Module:</strong> {spec_module}<br>'
+        )
+    if spec_version:
+        rows.append(
+            f'<span style="color:#22c55e; margin-right:5px;">&#10003;</span>'
+            f'<strong>Version/Build:</strong> {spec_version}<br>'
+        )
+    if spec_arch:
+        rows.append(
+            f'<span style="color:#22c55e; margin-right:5px;">&#10003;</span>'
+            f'<strong>Target Architecture:</strong> {spec_arch}'
+        )
+
+    if not rows:
+        return ""
+
+    rows_html = "\n            ".join(rows)
     return f"""
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:30px;">
-      <div style="max-width:500px;margin:auto;background:#fff;border-radius:10px;padding:30px;">
-        <h2 style="color:#1a1a1a;">Your download is ready</h2>
-        <p style="color:#444;">Here is your requested file: <strong>{file_name}</strong></p>
-        <p style="color:#444;">This link expires in <strong>{expire_hrs} hours</strong>.</p>
-        <a href="{download_url}"
-           style="display:inline-block;padding:12px 28px;background:#2563eb;
-                  color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;">
-          Download Now
-        </a>
-        <p style="color:#999;font-size:12px;margin-top:20px;">
-          If the button does not work:<br>
-          <a href="{download_url}" style="color:#2563eb;">{download_url}</a>
-        </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;background:#fafafa;border:1px solid #eef2f2;border-radius:6px;">
+        <tr>
+          <td style="padding:15px 20px;font-size:13px;color:#444;line-height:1.8;">
+            <strong style="color:#1f4d4d;font-size:11px;text-transform:uppercase;display:block;margin-bottom:8px;letter-spacing:0.5px;">
+              &#9881; Deployment Specifications
+            </strong>
+            {rows_html}
+          </td>
+        </tr>
+      </table>"""
+
+
+def _build_doc_link_block(doc_link: str | None) -> str:
+    """Technical documentation paragraph — only renders if a doc link was supplied."""
+    if not doc_link:
+        return ""
+    return f"""
+      <p style="margin-top:30px;">
+        For configuration and operational management, please refer to the <a href="{doc_link}" style="color:#1f4d4d;text-decoration:underline;font-weight:600;">technical documentation</a>.
+      </p>"""
+
+
+def build_email_html(
+    file_name: str,
+    download_url: str,
+    expire_hrs: int,
+    doc_link: str | None = None,
+    spec_module: str | None = None,
+    spec_version: str | None = None,
+    spec_arch: str | None = None,
+) -> str:
+    specs_html = _build_specs_block(spec_module, spec_version, spec_arch)
+    doc_html   = _build_doc_link_block(doc_link)
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Your Download</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#0b1f1f;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;background:#0b1f1f;">
+<tr>
+<td align="center">
+
+<table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+
+  <tr>
+    <td style="background:linear-gradient(135deg,#0f2a2a,#1f4d4d);padding:35px 30px;text-align:center;color:#ffffff;">
+
+      <div style="margin:0 auto 15px; width:46px; height:24px; background:#4ade80; border-radius:20px; position:relative; display:block; opacity:0.95;">
+        <div style="position:absolute; width:22px; height:22px; background:#4ade80; border-radius:50%; top:-10px; left:6px;"></div>
+        <div style="position:absolute; width:16px; height:16px; background:#4ade80; border-radius:50%; top:-6px; right:6px;"></div>
       </div>
-    </body>
-    </html>
+
+      <h2 style="margin:0;font-weight:600;letter-spacing:0.5px;font-size:24px;">
+        Your Download Is Ready
+      </h2>
+
+      <p style="margin:8px 0 0;color:#b8d4d4;font-size:13px;letter-spacing:0.5px;">
+        Secure Delivery • Enterprise Ready
+      </p>
+
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:40px 40px 35px;color:#333333;font-size:14px;line-height:1.7;">
+
+      <p style="margin-top:0;font-size:15px;">Dear Customer,</p>
+
+      <p>Your requested file is ready for download.</p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:25px 0;background:#f4f8f8;border-left:4px solid #22c55e;border-radius:6px;">
+        <tr>
+          <td style="padding:25px;text-align:center;">
+
+            <div style="margin:0 auto 12px; width:36px; height:36px; background:#e6f7ed; border-radius:50%; line-height:36px; text-align:center; color:#22c55e; font-size:18px; font-weight:bold;">
+              &darr;
+            </div>
+
+            <p style="margin:0 0 18px;color:#445555;font-size:13px;font-weight:600;">
+              Click below to securely download your file:
+            </p>
+
+            <a href="{download_url}"
+            style="background:#22c55e; color:#ffffff; text-decoration:none; padding:12px 28px;
+            border-radius:6px; display:inline-block; box-shadow:0 4px 14px rgba(34,197,94,0.35); text-align:left;">
+
+              <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                <tr>
+                  <td style="padding-right:12px; vertical-align:middle;">
+                    <div style="width:28px; height:36px; background:#ffffff; border-radius:3px; position:relative; overflow:hidden; border-top-right-radius:10px;">
+                      <div style="position:absolute; top:0; right:0; width:0; height:0; border-style:solid; border-width:0 10px 10px 0; border-color:transparent transparent #d1ebd9 transparent; background:#22c55e;"></div>
+                      <div style="position:absolute; bottom:3px; width:100%; text-align:center; font-family:Arial, sans-serif; font-size:9px; font-weight:900; color:#22c55e; letter-spacing:0.3px;">FILE</div>
+                    </div>
+                  </td>
+                  <td style="vertical-align:middle; line-height:1.2;">
+                    <span style="font-size:14px; font-weight:800; display:block; letter-spacing:0.5px; text-transform:uppercase;">Download {file_name}</span>
+                    <span style="font-size:10px; font-weight:400; color:#d1ebd9; display:block; margin-top:2px;">Secure Protocol Block &darr;</span>
+                  </td>
+                </tr>
+              </table>
+
+            </a>
+
+            <p style="margin:18px 0 0;font-size:11px;color:#778888;font-style:italic;">
+              &#9202; This secure link expires automatically in {expire_hrs} hours.
+            </p>
+
+          </td>
+        </tr>
+      </table>
+{specs_html}
+{doc_html}
+
+      <p style="margin-bottom:0;padding-top:10px;">
+        Best regards,<br>
+        <strong style="color:#1f4d4d;">The Delivery Team</strong>
+      </p>
+
+    </td>
+  </tr>
+
+  <tr>
+    <td style="height:1px;background:#e6eeee;"></td>
+  </tr>
+
+  <tr>
+    <td style="padding:25px 30px;text-align:center;background:#f4f8f8;font-size:12px;color:#667777;line-height:1.6;">
+
+      <div style="margin-bottom:8px;">
+        <strong style="color:#2f3f3f;">{FROM_EMAIL}</strong>
+      </div>
+
+      <div style="margin-top:15px;color:#aaaaaa;font-size:11px;">
+        &copy; {datetime.now(timezone.utc).year} All rights reserved.
+      </div>
+
+    </td>
+  </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
     """
 
 # ── Models ────────────────────────────────────────────────────────────────────
@@ -129,6 +285,12 @@ class SubscribeRequest(BaseModel):
     email:     EmailStr
     website:   str      # from data-website attribute
     file_name: str      # from data-file attribute
+
+    # Optional — all None/omitted by default, each section only renders if present
+    doc_link:     str | None = None   # from data-doc-link attribute
+    spec_module:  str | None = None   # from data-spec-module attribute
+    spec_version: str | None = None   # from data-spec-version attribute
+    spec_arch:    str | None = None   # from data-spec-arch attribute
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -171,7 +333,15 @@ async def subscribe(req: SubscribeRequest, request: Request):
         db.commit()
 
     download_url = f"{BASE_URL}/download/{token}"
-    html         = build_email_html(file_name, download_url, LINK_EXPIRE_HRS)
+    html         = build_email_html(
+        file_name,
+        download_url,
+        LINK_EXPIRE_HRS,
+        doc_link=req.doc_link,
+        spec_module=req.spec_module,
+        spec_version=req.spec_version,
+        spec_arch=req.spec_arch,
+    )
     email_sent   = send_email(req.email, f"Your download: {file_name}", html)
 
     return {

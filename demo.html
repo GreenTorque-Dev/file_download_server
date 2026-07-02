@@ -53,6 +53,39 @@
 
   <hr class="divider">
 
+  <!-- Example: iso.img with doc link + deployment specs (optional, email-only) -->
+  <div class="card">
+    <h2>Page A2 — sends <code>vmx-installer.iso</code> with doc link &amp; specs</h2>
+    <p>Optional attributes below only affect the <strong>follow-up email</strong> — the widget itself looks the same. Omit any of them and that section just won't show in the email.</p>
+    <div class="code-block">&lt;script src="http://localhost:8000/plugin.js"
+        data-website="mysite"
+        data-file="vmx-installer.iso"
+        data-title="Download VMX Installer"
+        data-btn="Send me the ISO"
+        data-theme="light"
+        data-position="inline"
+        data-doc-link="https://docs.example.com/vmx-setup"
+        data-spec-module="VMX Hypervisor"
+        data-spec-version="v10.0-Stable"
+        data-spec-arch="x86_64 (64-Bit)"&gt;
+&lt;/script&gt;</div>
+    <p class="label">Live Preview ↓</p>
+    <script src="/plugin.js"
+      data-website="mysite"
+      data-file="vmx-installer.iso"
+      data-title="Download VMX Installer"
+      data-btn="Send me the ISO"
+      data-theme="light"
+      data-position="inline"
+      data-doc-link="https://docs.example.com/vmx-setup"
+      data-spec-module="VMX Hypervisor"
+      data-spec-version="v10.0-Stable"
+      data-spec-arch="x86_64 (64-Bit)">
+    </script>
+  </div>
+
+  <hr class="divider">
+
   <!-- Example 2: guide.pdf dark floating -->
   <div class="card">
     <h2>Page B — sends <code>guide.pdf</code> (floating, dark)</h2>

@@ -20,6 +20,12 @@
  *   data-subtitle — subheading text
  *   data-btn      — button label
  *   data-position — "inline" | "bottom-right" | "bottom-left" | "center-popup"
+ *
+ *   -- Optional, shown in the follow-up email only (omit to hide) --
+ *   data-doc-link     — URL to technical/product documentation
+ *   data-spec-module  — e.g. "VMX Hypervisor"
+ *   data-spec-version — e.g. "v10.0-Stable"
+ *   data-spec-arch    — e.g. "x86_64 (64-Bit)"
  */
 (function () {
   "use strict";
@@ -33,6 +39,12 @@
   const SUBTITLE  = SCRIPT.getAttribute("data-subtitle") || "Enter your email and we\u2019ll send you the download link instantly.";
   const BTN_LABEL = SCRIPT.getAttribute("data-btn")      || "Send me the link";
   const POSITION  = SCRIPT.getAttribute("data-position") || "inline";
+
+  // Optional — email-only fields. Empty string if not provided, sent as null.
+  const DOC_LINK     = SCRIPT.getAttribute("data-doc-link")     || "";
+  const SPEC_MODULE  = SCRIPT.getAttribute("data-spec-module")  || "";
+  const SPEC_VERSION = SCRIPT.getAttribute("data-spec-version") || "";
+  const SPEC_ARCH    = SCRIPT.getAttribute("data-spec-arch")    || "";
 
   if (!FILE) {
     console.error("[EmailPlugin] data-file attribute is required.");
@@ -123,7 +135,15 @@
         const res = await fetch(`${SERVER}/api/subscribe`, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ email, website: WEBSITE, file_name: FILE }),
+          body:    JSON.stringify({
+            email,
+            website:      WEBSITE,
+            file_name:    FILE,
+            doc_link:     DOC_LINK     || null,
+            spec_module:  SPEC_MODULE  || null,
+            spec_version: SPEC_VERSION || null,
+            spec_arch:    SPEC_ARCH    || null,
+          }),
         });
         const data = await res.json();
 
